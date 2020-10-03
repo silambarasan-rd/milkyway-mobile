@@ -25,7 +25,7 @@ class CustomerDetails extends React.Component {
         customerData: customerData,
       },
       () => {
-        navigation.setOptions({title: this.state.customerData.customerName});
+        navigation.setOptions({title: this.state.customerData.customer_name});
       },
     );
   }
@@ -41,7 +41,7 @@ class CustomerDetails extends React.Component {
             <View style={styles.body_container}>
               <View style={styles.section_head}>
                 <Text style={styles.section_title}>
-                  {this.state.customerData.customerName}
+                  {this.state.customerData.customer_name}
                 </Text>
               </View>
             </View>

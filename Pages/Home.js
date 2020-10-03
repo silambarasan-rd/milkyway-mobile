@@ -7,36 +7,34 @@ import {
   SafeAreaView,
   StyleSheet,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import ListCustomerStatus from './ListCustomerStatus';
-import CustomerModel from '../Models/CustomerModel';
 import moment from 'moment';
 import {API_ENDPOINT} from '../constants';
+import {connect} from 'react-redux';
+import {Icon} from 'react-native-elements';
 
-const HomePage = ({navigation}) => {
-  let initialArr: CustomerModel = [];
-  const [listCustomers, setCustomerData] = useState([]);
+const HomePage = ({navigation, globalCustomerList, updateCustomersList}) => {
   const currentMonth = moment().format('MMMM');
 
   const getAllCustomerList = () => {
-    fetch(API_ENDPOINT + 'customers/getAllCustomers', {method: 'GET'})
+    fetch(API_ENDPOINT + 'customers/getMonthlyCustomersReport', {method: 'GET'})
       .catch((err) => {
         console.warn(err);
       })
       .then((res) => res.json())
       .then((res) => {
-        setCustomerData(res.payload);
-      });
+        if (res.status === 'success') {
+          updateCustomersList(res.payload);
+        }
+      })
+      .finally(() => {});
   };
 
   useEffect(() => {
     getAllCustomerList();
-    // fetch('https://reactnative.dev/movies.json')
-    //     .then((response) => response.json())
-    //     .then((json) => setData(json.movies))
-    //     .catch((error) => console.error(error))
-    //     .finally(() => setLoading(false));
   }, []);
 
   const redirectToCustomerDetail = (customerData) => {
@@ -70,17 +68,32 @@ const HomePage = ({navigation}) => {
                 Status of Current Month - {currentMonth}
               </Text>
             </View>
-
-            {listCustomers.map((customerInfo) => {
-              return (
-                <ListCustomerStatus
-                  key={customerInfo.id}
-                  title={customerInfo.customerName}
-                  status={customerInfo.customerStatus}
-                  clickHandler={() => redirectToCustomerDetail(customerInfo)}
-                />
-              );
-            })}
+            {globalCustomerList && globalCustomerList.length > 0 ? (
+              globalCustomerList.map((customerInfo) => {
+                return (
+                  <ListCustomerStatus
+                    key={customerInfo.id}
+                    title={customerInfo.customer_name}
+                    status={customerInfo.payment_status}
+                    quantity={customerInfo.payment_quantity}
+                    unit={customerInfo.payment_unit}
+                    clickHandler={() => redirectToCustomerDetail(customerInfo)}
+                  />
+                );
+              })
+            ) : (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginTop: 20,
+                }}>
+                <Text style={{fontSize: 20, fontWeight: '200'}}>
+                  No Customers found!!
+                </Text>
+              </View>
+            )}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -88,7 +101,23 @@ const HomePage = ({navigation}) => {
   );
 };
 
-export default HomePage;
+const mapStateToProps = (state) => {
+  return {
+    globalCustomerList: state.listCustomers.customerData,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    updateCustomersList: (customerData) =>
+      dispatch({
+        type: 'GET_CUSTOMERS_LIST',
+        customerData: customerData,
+      }),
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(HomePage);
 
 const styles = StyleSheet.create({
   scrollView: {
